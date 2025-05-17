@@ -1,16 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Single Task Manager</title>
+  <title>✨ Fun Task Manager ✨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Comic Neue', cursive;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
       overflow: hidden;
+      transition: background-color 0.5s, color 0.5s;
+    }
+    
+    /* Light mode styles */
+    body.light-mode {
+      background-color: #f0f8ff; /* Pleasant light color */
+      color: #000;
+    }
+    
+    /* Dark mode styles */
+    body.dark-mode {
+      background-color: #2f2f2f; /* Pleasant dark grey */
+      color: #fff;
     }
     
     .container {
@@ -18,14 +32,32 @@
       width: 100%;
       max-width: 500px;
       z-index: 1;
+      padding: 20px;
+    }
+    
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
     }
     
     #taskInput {
-      padding: 10px;
+      padding: 15px;
       width: 80%;
-      font-size: 16px;
+      font-size: 18px;
+      font-family: 'Comic Neue', cursive;
       text-align: center;
       margin-bottom: 20px;
+      border: 3px solid #ff9800;
+      border-radius: 12px;
+      transition: all 0.3s;
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+    
+    #taskInput:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+      transform: scale(1.02);
     }
     
     .task-container {
@@ -33,23 +65,52 @@
     }
     
     button {
-      padding: 10px 20px;
+      padding: 12px 25px;
       background-color: #4CAF50;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 12px;
       cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-      transition: transform 0.2s;
+      font-size: 18px;
+      font-family: 'Comic Neue', cursive;
+      font-weight: bold;
+      margin-top: 15px;
+      transition: transform 0.2s, background-color 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     button:hover {
       background-color: #45a049;
+      transform: translateY(-3px);
     }
     
     button:active {
-      transform: scale(0.95);
+      transform: scale(0.95) translateY(0);
+    }
+    
+    /* Toggle button styles */
+    #modeToggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ff9800;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: background-color 0.3s, transform 0.2s;
+      opacity: 0.7;
+    }
+    
+    #modeToggle:hover {
+      opacity: 1;
+      transform: scale(1.1);
     }
     
     canvas {
@@ -61,42 +122,136 @@
       pointer-events: none;
       z-index: 0;
     }
+    
+    .emoji {
+      font-size: 1.5em;
+      display: inline-block;
+      margin: 0 5px;
+    }
+    
+    .motivational-text {
+      margin-top: 30px;
+      font-size: 1.2em;
+      opacity: 0.8;
+      font-style: italic;
+    }
+    
+    #taskCounter {
+      margin-top: 20px;
+      font-size: 1.1em;
+      font-weight: bold;
+      color: #ff9800;
+    }
   </style>
 </head>
-<body>
+<body class="light-mode">
   <canvas id="confettiCanvas"></canvas>
+  
+  <button id="modeToggle" onclick="toggleMode()">🌓</button>
+  
   <div class="container">
-    <h1>Task Manager</h1>
+    <h1><span class="emoji">⭐</span> Just one more task!</h1>
     
-    <input type="text" id="taskInput" placeholder="Type your task here..." autofocus>
+    <input type="text" id="taskInput" placeholder="" autofocus>
     
     <div class="task-container">
-      <button id="doneButton" onclick="taskComplete()">Done!</button>
+      <button id="doneButton" onclick="taskComplete()">
+        Done! 🎉
+      </button>
     </div>
+    
+    <div id="taskCounter">Tasks completed today: 0</div>
   </div>
 
-  <audio id="levelUpSound" preload="auto">
-    <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMQAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAeAAAgzgAUFBQUJiYmJiYyMjIyMkREREREVlZWVlZoaGhoaHp6enp6jIyMjIyenp6enrCwsLCwwsLCwsLU1NTU1Obm5ubm+Pj4+Pj4////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQZDwP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=">
-  </audio>
-
   <script>
-    // Sound and confetti setup
-    const levelUpSound = document.getElementById('levelUpSound');
+    // Initialize variables
     const canvas = document.getElementById('confettiCanvas');
     const ctx = canvas.getContext('2d');
     const taskInput = document.getElementById('taskInput');
+    const taskCounter = document.getElementById('taskCounter');
+    let tasksCompleted = 0;
+    let currentMode = 'light';
+    
+    // Create audio element programmatically
+    const levelUpSound = new Audio();
+    levelUpSound.src = 'https://cdnjs.cloudflare.com/ajax/libs/soundjs/1.0.1/soundjs.min.js';  // This is a placeholder - audio will be created in code
+    
+    // Set up audio context for better browser compatibility
+    let audioContext;
+    try {
+      // Fix for browsers that require user interaction before audio
+      window.addEventListener('click', initAudio, { once: true });
+      window.addEventListener('keydown', initAudio, { once: true });
+      
+      function initAudio() {
+        if (audioContext) return;
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      // Create a better sound effect function
+      function playSuccessSound() {
+        if (!audioContext) initAudio();
+        if (!audioContext) return;  // If still no audio context, return
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Create a motivating success sound
+        oscillator.type = 'sine';
+        
+        // Uplifting major chord arpeggio
+        const now = audioContext.currentTime;
+        oscillator.frequency.setValueAtTime(523.25, now); // C5
+        oscillator.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        oscillator.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        oscillator.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+        
+        gainNode.gain.setValueAtTime(0.3, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        
+        oscillator.start();
+        oscillator.stop(now + 0.4);
+      }
+    } catch (e) {
+      console.log("Web Audio API not supported:", e);
+    }
     
     // Resize canvas to match window
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    window.addEventListener('resize', function() {
+    function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-    });
+    }
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
     
     // Confetti particles array
     let confetti = [];
+    
+    // Motivational phrases - Removed as requested
+    // const motivationalPhrases = [...];
+    
+    // Update motivational text randomly
+    function updateMotivationalText() {
+      // Removed as per request
+    }
+    
+    // Toggle between light and dark mode
+    function toggleMode() {
+      const body = document.body;
+      if (body.classList.contains('light-mode')) {
+        body.classList.remove('light-mode');
+        body.classList.add('dark-mode');
+        currentMode = 'dark';
+      } else {
+        body.classList.remove('dark-mode');
+        body.classList.add('light-mode');
+        currentMode = 'light';
+      }
+    }
     
     // Confetti colors
     const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
@@ -107,27 +262,36 @@
     function createConfetti() {
       return {
         x: Math.random() * canvas.width,
-        y: Math.random() * -canvas.height,
-        size: Math.random() * 10 + 5,
+        y: Math.random() * -canvas.height / 2,
+        size: Math.random() * 15 + 5,
         color: colors[Math.floor(Math.random() * colors.length)],
-        speed: Math.random() * 3 + 2,
+        speed: Math.random() * 5 + 2,
         angle: Math.random() * 6.28,
-        spin: Math.random() * 0.2 - 0.1
+        spin: Math.random() * 0.4 - 0.2,
+        shape: Math.floor(Math.random() * 3) // 0: square, 1: circle, 2: triangle
       };
     }
     
     // Main function to run when task is completed
     function taskComplete() {
       // Clear the input and focus
-      const hadTask = taskInput.value.trim() !== '';
+      const taskText = taskInput.value.trim();
+      const hadTask = taskText !== '';
       taskInput.value = '';
       taskInput.focus();
       
       // Only show effects if there was a task
       if (hadTask) {
-        // Play level up sound
-        levelUpSound.currentTime = 0;
-        levelUpSound.play().catch(e => console.log("Audio play error:", e));
+        // Update task counter
+        tasksCompleted++;
+        taskCounter.textContent = `Tasks completed today: ${tasksCompleted}`;
+        
+        // Play success sound
+        try {
+          playSuccessSound();
+        } catch (e) {
+          console.log("Error playing sound:", e);
+        }
         
         // Create confetti
         for (let i = 0; i < 150; i++) {
@@ -141,7 +305,7 @@
       }
     }
     
-    // Optional: Also allow Enter key to complete task
+    // Also allow Enter key to complete task
     taskInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         taskComplete();
@@ -166,12 +330,31 @@
         p.y += p.speed;
         p.angle += p.spin;
         
-        // Draw the confetti
+        // Draw the confetti based on shape
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.angle);
         ctx.fillStyle = p.color;
-        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        
+        switch(p.shape) {
+          case 0: // Square
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            break;
+          case 1: // Circle
+            ctx.beginPath();
+            ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+            break;
+          case 2: // Triangle
+            ctx.beginPath();
+            ctx.moveTo(0, -p.size / 2);
+            ctx.lineTo(p.size / 2, p.size / 2);
+            ctx.lineTo(-p.size / 2, p.size / 2);
+            ctx.closePath();
+            ctx.fill();
+            break;
+        }
+        
         ctx.restore();
         
         // Remove confetti that's gone below the screen
@@ -182,6 +365,12 @@
       
       requestAnimationFrame(animateConfetti);
     }
+    
+    // Emoji initialization - removed animation code
+    const emojis = document.querySelectorAll('.emoji');
+    
+    // Initialize
+    resizeCanvas();
   </script>
 </body>
 </html>
