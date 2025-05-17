@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Single Task Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 500px;
+      z-index: 1;
+    }
+    
+    #taskInput {
+      padding: 10px;
+      width: 80%;
+      font-size: 16px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .task-container {
+      margin: 20px 0;
+    }
+    
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+      transition: transform 0.2s;
+    }
+    
+    button:hover {
+      background-color: #45a049;
+    }
+    
+    button:active {
+      transform: scale(0.95);
+    }
+    
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confettiCanvas"></canvas>
+  <div class="container">
+    <h1>Task Manager</h1>
+    
+    <input type="text" id="taskInput" placeholder="Type your task here..." autofocus>
+    
+    <div class="task-container">
+      <button id="doneButton" onclick="taskComplete()">Done!</button>
+    </div>
+  </div>
+
+  <audio id="levelUpSound" preload="auto">
+    <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU3LjU2LjEwMQAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAeAAAgzgAUFBQUJiYmJiYyMjIyMkREREREVlZWVlZoaGhoaHp6enp6jIyMjIyenp6enrCwsLCwwsLCwsLU1NTU1Obm5ubm+Pj4+Pj4////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//sQZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sQZDwP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=">
+  </audio>
+
+  <script>
+    // Sound and confetti setup
+    const levelUpSound = document.getElementById('levelUpSound');
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    const taskInput = document.getElementById('taskInput');
+    
+    // Resize canvas to match window
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    window.addEventListener('resize', function() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+    
+    // Confetti particles array
+    let confetti = [];
+    
+    // Confetti colors
+    const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
+                    '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', 
+                    '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+    
+    // Create a confetti particle
+    function createConfetti() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height,
+        size: Math.random() * 10 + 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        speed: Math.random() * 3 + 2,
+        angle: Math.random() * 6.28,
+        spin: Math.random() * 0.2 - 0.1
+      };
+    }
+    
+    // Main function to run when task is completed
+    function taskComplete() {
+      // Clear the input and focus
+      const hadTask = taskInput.value.trim() !== '';
+      taskInput.value = '';
+      taskInput.focus();
+      
+      // Only show effects if there was a task
+      if (hadTask) {
+        // Play level up sound
+        levelUpSound.currentTime = 0;
+        levelUpSound.play().catch(e => console.log("Audio play error:", e));
+        
+        // Create confetti
+        for (let i = 0; i < 150; i++) {
+          confetti.push(createConfetti());
+        }
+        
+        if (!animationRunning) {
+          animationRunning = true;
+          animateConfetti();
+        }
+      }
+    }
+    
+    // Optional: Also allow Enter key to complete task
+    taskInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        taskComplete();
+      }
+    });
+    
+    // Animation flag
+    let animationRunning = false;
+    
+    // Animation function
+    function animateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      if (confetti.length === 0) {
+        animationRunning = false;
+        return;
+      }
+      
+      for (let i = confetti.length - 1; i >= 0; i--) {
+        const p = confetti[i];
+        
+        p.y += p.speed;
+        p.angle += p.spin;
+        
+        // Draw the confetti
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.restore();
+        
+        // Remove confetti that's gone below the screen
+        if (p.y > canvas.height + p.size) {
+          confetti.splice(i, 1);
+        }
+      }
+      
+      requestAnimationFrame(animateConfetti);
+    }
+  </script>
+</body>
+</html>
