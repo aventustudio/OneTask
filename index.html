@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>✨ Fun Task Manager ✨</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -11,7 +12,8 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
       transition: background-color 0.5s, color 0.5s;
     }
     
@@ -31,10 +33,10 @@
       text-align: center;
       width: 100%;
       max-width: 500px;
-      z-index: 1;
       padding: 20px;
+      box-sizing: border-box;
     }
-    
+
     h1 {
       font-size: 2.5em;
       margin-bottom: 20px;
@@ -42,7 +44,8 @@
     
     #taskInput {
       padding: 15px;
-      width: 80%;
+      width: 100%;
+      max-width: 100%;
       font-size: 18px;
       font-family: 'Comic Neue', cursive;
       text-align: center;
@@ -77,6 +80,7 @@
       margin-top: 15px;
       transition: transform 0.2s, background-color 0.3s;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin: 10px 0;
     }
     
     button:hover {
@@ -142,6 +146,32 @@
       font-weight: bold;
       color: #ff9800;
     }
+
+    .bounce {
+      display: inline-block;
+      animation: bounce 1s infinite;
+      line-height: 1;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    .fade-out {
+      animation: fadeOut 0.5s forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+    }
   </style>
 </head>
 <body class="light-mode">
@@ -161,85 +191,83 @@
     </div>
     
     <div id="taskCounter">Tasks completed today: 0</div>
+    <div id="emoticonContainer" style="height: 80px; margin-top: 40px; font-size: 3em; overflow: visible; text-align: center;"></div>
   </div>
 
   <script>
-    // Initialize variables
     const canvas = document.getElementById('confettiCanvas');
     const ctx = canvas.getContext('2d');
     const taskInput = document.getElementById('taskInput');
     const taskCounter = document.getElementById('taskCounter');
+    const gifContainer = document.getElementById('gifContainer');
     let tasksCompleted = 0;
     let currentMode = 'light';
-    
-    // Create audio element programmatically
-    const levelUpSound = new Audio();
-    levelUpSound.src = 'https://cdnjs.cloudflare.com/ajax/libs/soundjs/1.0.1/soundjs.min.js';  // This is a placeholder - audio will be created in code
-    
-    // Set up audio context for better browser compatibility
+
+    const emoticons = [
+      '🎉', '😁', '🥳', '💃', '🕺', '🔥', '🌟', '🎈', '😸', '🍾',
+      '🚀', '😎', '👏', '🙌', '✨', '💥', '🎊'
+    ];
+
+    function showRandomEmoticon() {
+      const emoticon = emoticons[Math.floor(Math.random() * emoticons.length)];
+      const container = document.getElementById('emoticonContainer');
+
+      const emoteEl = document.createElement('div');
+      emoteEl.className = 'bounce';
+      emoteEl.textContent = emoticon;
+
+      container.innerHTML = '';
+      container.appendChild(emoteEl);
+
+      setTimeout(() => {
+        emoteEl.classList.add('fade-out');
+        setTimeout(() => {
+          container.innerHTML = '';
+        }, 500); // match fadeOut duration
+      }, 3000);
+    }
+
     let audioContext;
     try {
-      // Fix for browsers that require user interaction before audio
       window.addEventListener('click', initAudio, { once: true });
       window.addEventListener('keydown', initAudio, { once: true });
-      
       function initAudio() {
         if (audioContext) return;
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
       }
-      
-      // Create a better sound effect function
+
       function playSuccessSound() {
         if (!audioContext) initAudio();
-        if (!audioContext) return;  // If still no audio context, return
-        
+        if (!audioContext) return;
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-        
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-        
-        // Create a motivating success sound
         oscillator.type = 'sine';
-        
-        // Uplifting major chord arpeggio
         const now = audioContext.currentTime;
-        oscillator.frequency.setValueAtTime(523.25, now); // C5
-        oscillator.frequency.setValueAtTime(659.25, now + 0.1); // E5
-        oscillator.frequency.setValueAtTime(783.99, now + 0.2); // G5
-        oscillator.frequency.setValueAtTime(1046.50, now + 0.3); // C6
-        
+        oscillator.frequency.setValueAtTime(523.25, now);
+        oscillator.frequency.setValueAtTime(659.25, now + 0.1);
+        oscillator.frequency.setValueAtTime(783.99, now + 0.2);
+        oscillator.frequency.setValueAtTime(1046.50, now + 0.3);
         gainNode.gain.setValueAtTime(0.3, now);
         gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-        
         oscillator.start();
         oscillator.stop(now + 0.4);
       }
     } catch (e) {
       console.log("Web Audio API not supported:", e);
     }
-    
-    // Resize canvas to match window
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
-    
+
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
-    
-    // Confetti particles array
+
     let confetti = [];
-    
-    // Motivational phrases - Removed as requested
-    // const motivationalPhrases = [...];
-    
-    // Update motivational text randomly
-    function updateMotivationalText() {
-      // Removed as per request
-    }
-    
-    // Toggle between light and dark mode
+
     function toggleMode() {
       const body = document.body;
       if (body.classList.contains('light-mode')) {
@@ -252,13 +280,11 @@
         currentMode = 'light';
       }
     }
-    
-    // Confetti colors
+
     const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
                     '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', 
                     '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
-    
-    // Create a confetti particle
+
     function createConfetti() {
       return {
         x: Math.random() * canvas.width,
@@ -268,84 +294,69 @@
         speed: Math.random() * 5 + 2,
         angle: Math.random() * 6.28,
         spin: Math.random() * 0.4 - 0.2,
-        shape: Math.floor(Math.random() * 3) // 0: square, 1: circle, 2: triangle
+        shape: Math.floor(Math.random() * 3)
       };
     }
-    
-    // Main function to run when task is completed
+
     function taskComplete() {
-      // Clear the input and focus
       const taskText = taskInput.value.trim();
       const hadTask = taskText !== '';
       taskInput.value = '';
       taskInput.focus();
-      
-      // Only show effects if there was a task
+
       if (hadTask) {
-        // Update task counter
         tasksCompleted++;
         taskCounter.textContent = `Tasks completed today: ${tasksCompleted}`;
-        
-        // Play success sound
         try {
           playSuccessSound();
         } catch (e) {
           console.log("Error playing sound:", e);
         }
-        
-        // Create confetti
         for (let i = 0; i < 150; i++) {
           confetti.push(createConfetti());
         }
-        
         if (!animationRunning) {
           animationRunning = true;
           animateConfetti();
         }
+        showRandomEmoticon();
       }
     }
-    
-    // Also allow Enter key to complete task
+
     taskInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         taskComplete();
       }
     });
-    
-    // Animation flag
+
     let animationRunning = false;
-    
-    // Animation function
+
     function animateConfetti() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
       if (confetti.length === 0) {
         animationRunning = false;
         return;
       }
-      
+
       for (let i = confetti.length - 1; i >= 0; i--) {
         const p = confetti[i];
-        
         p.y += p.speed;
         p.angle += p.spin;
-        
-        // Draw the confetti based on shape
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.angle);
         ctx.fillStyle = p.color;
-        
+
         switch(p.shape) {
-          case 0: // Square
+          case 0:
             ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
             break;
-          case 1: // Circle
+          case 1:
             ctx.beginPath();
             ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
             ctx.fill();
             break;
-          case 2: // Triangle
+          case 2:
             ctx.beginPath();
             ctx.moveTo(0, -p.size / 2);
             ctx.lineTo(p.size / 2, p.size / 2);
@@ -354,22 +365,17 @@
             ctx.fill();
             break;
         }
-        
+
         ctx.restore();
-        
-        // Remove confetti that's gone below the screen
+
         if (p.y > canvas.height + p.size) {
           confetti.splice(i, 1);
         }
       }
-      
+
       requestAnimationFrame(animateConfetti);
     }
-    
-    // Emoji initialization - removed animation code
-    const emojis = document.querySelectorAll('.emoji');
-    
-    // Initialize
+
     resizeCanvas();
   </script>
 </body>
